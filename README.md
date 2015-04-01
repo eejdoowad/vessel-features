@@ -29,11 +29,11 @@ To setup:
     
       Note: You can use a different version of Visual Studio if you change 'vc12' in the path above to some other version
       
-        vc12: Visual Studio 2013
+          vc12: Visual Studio 2013
         
-        vc11: Visual Studio 2012
+          vc11: Visual Studio 2012
         
-        vc10: Visual Studio 2010
+          vc10: Visual Studio 2010
 
 2. Clone this repository
 
