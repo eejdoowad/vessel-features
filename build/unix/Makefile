@@ -16,7 +16,7 @@ SOURCES_NO_PATH=$(patsubst $(SOURCEDIR)%,%,$(SOURCES))
 HEADERS=$(wildcard $(SOURCEDIR)*.hpp)
 OBJECTS=$(patsubst %.cpp,$(OUTDIR)%.o,$(SOURCES_NO_PATH))
 
-$(OUTDIR)%.o: $(SOURCEDIR)%.cpp
+$(OUTDIR)%.o: $(SOURCEDIR)%.cpp $(HEADERS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 all: $(EXECUTABLE)

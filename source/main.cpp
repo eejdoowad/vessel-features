@@ -1,10 +1,28 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+#include <string>
 #include "vessel_features.hpp"
 
 using namespace cv;
 using namespace std;
+
+void tellMat(const Mat& m);
+void tempTest();
+
+int main(int argc, char* argv[])
+{
+
+	if (argc != 2)
+	{
+		cerr << "Incorrect number of arguments" << endl;
+		cerr << "Usage: ./vessel_feature testimage.bmp" << endl;
+		return 1;
+	}
+	vf::Demo(string(argv[1]));
+	waitKey(0); // Wait for a keystroke in the window
+	return 0;
+}
 
 void tellMat(const Mat& m)
 {
@@ -17,17 +35,10 @@ void tellMat(const Mat& m)
 
 void tempTest()
 {
-	//
-	RidgeFeature x;
 	Mat a, b, c, d, e;
-	x.FrangiFilter2D(a, b, c, d);
+	vf::FrangiFilter2D(a, b, c, d);
 	cout << "atan2(3.4, 4.7)" << atan2(3.4, 4.7) << endl;
 	cout << "pow(2.0, 3)" << pow(2.0, 3) << endl;
-
-	
-
-
-	//
 
 	Mat image;
 	image = imread("hamlyn.bmp", IMREAD_COLOR); // Read the file
@@ -35,13 +46,11 @@ void tempTest()
 	if (!image.data) // Check for invalid input
 	{
 		cout << "Could not open or find the image" << std::endl;
-		exit(-1);
+		exit(1);
 	}
-
 
 	cout << "image" << endl;
 	tellMat(image);
-
 
 	cout << "CV_8U: " << CV_8U << endl;
 	cout << "CV_8UC3: " << CV_8UC3 << endl;
@@ -60,8 +69,7 @@ void tempTest()
 	tellMat(g);
 
 	Mat Ixx, Iyy, Ixy;
-	RidgeFeature rf;
-	rf.Hessian2D(g, 4, Ixx, Iyy, Ixy);
+	vf::Hessian2D(g, 4, Ixx, Iyy, Ixy);
 
 	namedWindow("Display window", WINDOW_AUTOSIZE); // Create a window for display.
 	imshow("Display window", image); // Show our image inside it.
@@ -80,11 +88,4 @@ void tempTest()
 
 	namedWindow("Ixy", WINDOW_AUTOSIZE);
 	imshow("Ixy", Ixy);
-}
-
-int main(int argc, char** argv)
-{
-	RidgeFeature::Demo();
-	waitKey(0); // Wait for a keystroke in the window
-	return 0;
 }
