@@ -21,15 +21,18 @@ To setup:
     
     1. Download OpenCV version 2.4.11 for windows and unzip it. 
     
-      Note: You can use a different version if you know modify the .props files (opencv_2411_debug.props and opencv_2411_release.props)
+      Note: You can use a different version if you modify the .props files (opencv_2411_debug.props and opencv_2411_release.props)
     
     2. Make a new environment variable named 'OPENCV_DIR' with value 'path/to/OpenCV/Root/Directory'
     
     3. Add '%OPENCV_DIR%\build\x86\vc12\bin' to your Path environment variable
     
-      Note: You can use a different version of Visual Studio if you modifying 'vc12' in the path above to some other version
+      Note: You can use a different version of Visual Studio if you change 'vc12' in the path above to some other version
+      
         vc12: Visual Studio 2013
+        
         vc11: Visual Studio 2012
+        
         vc10: Visual Studio 2010
 
 2. Clone this repository
