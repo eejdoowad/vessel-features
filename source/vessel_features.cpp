@@ -12,10 +12,15 @@ using namespace cv;
 namespace vf
 {
 
+	// Hessian2D, Complete
+	// Input: In, Sigma
+	// Output: Dxx, Dyy, Dxy (note that Dyx == Dxy)
 	void Hessian2D(const Mat& In, int Sigma, Mat &Dxx, Mat &Dyy, Mat &Dxy)
 	{
-		int kern_width = 6 * Sigma + 1; // and height, the kernal extends a multiple of 3 out in each direction
-		Mat Y = Mat(kern_width, kern_width, MAT_TYPE);
+		const int kern_width = 6 * Sigma + 1;
+		// and height, the kernal extends a multiple of 3 out from the center in each direction
+
+		Mat Y = Mat(kern_width, kern_width, MAT_TYPE_ID);
 
 		for (int i = 0, val = -3 * Sigma; i < kern_width; i++, val++)
 		{
@@ -40,10 +45,10 @@ namespace vf
 		Imfilter(In, Dyy, DGaussyy);
 	}
 
-	// Eig2Image
+	// Eig2Image, Complete
 	// Input: Dxx, Dxy, Dyy
 	// Output: Lambda1, Lambda2, Ix, Iy, mu1, mu2
-	void Eig2Image(const Mat& Dxx, const Mat& Dxy, const Mat& Dyy, Mat& Lambda1, Mat& Lambda2, Mat &Ix, Mat &Iy, Mat &mu1, Mat &mu2)
+	void Eig2Image(const Mat& Dxx, const Mat& Dxy, const Mat& Dyy, Mat& Lambda1, Mat& Lambda2, Mat& Ix, Mat& Iy, Mat& mu1, Mat& mu2)
 	{
 		const int rows = Dxx.rows, cols = Dxx.cols;
 		for (int i = 0; i<rows; i++)
@@ -87,7 +92,7 @@ namespace vf
 		}
 	}
 
-	// FrangiFilter2d
+	// FrangiFilter2d, Complete
 	// Enhances vessels on image
 	// Input: In
 	// Output: Out, hessianAngle, hessianDeterminant
@@ -100,7 +105,8 @@ namespace vf
 		// Scale: output matrix containing scales on which maximum intensity of every pixel is found (? whatever that means)
 		// hessianAngle: output matrix containing directions (angles) of pixels
 		// hessianDeterminant: determinant of Hessian: lambda1 * lambda 2
-
+		const int height = In.rows;
+		const int width = In.cols;
 
 		e_t beta = 2 * options.frangiBetaOne * options.frangiBetaOne;
 		e_t c = 2 * options.frangiBetaTwo * options.frangiBetaTwo;
@@ -113,37 +119,24 @@ namespace vf
 				std::cout << "Current Frangi Filter Sigma: " << sigma << std::endl;
 			}
 
-
-			Mat Dxx(height, width, MAT_TYPE);
-			Mat Dxy(height, width, MAT_TYPE);
-			Mat Dyy(height, width, MAT_TYPE);
-
+			Mat Dxx(height, width, MAT_TYPE_ID);
+			Mat Dxy(height, width, MAT_TYPE_ID);
+			Mat Dyy(height, width, MAT_TYPE_ID);
 
 			Hessian2D(In, sigma, Dxx, Dyy, Dxy);
-
 
 			Dxx = (sigma * sigma) * Dxx;
 			Dxy = (sigma * sigma) * Dxy;
 			Dyy = (sigma * sigma) * Dyy;
 
-
-			Mat Lambda1(height, width, MAT_TYPE);
-			Mat Lambda2(height, width, MAT_TYPE);
-			Mat Ix(height, width, MAT_TYPE);
-			Mat Iy(height, width, MAT_TYPE);
-			Mat Mu1(height, width, MAT_TYPE);
-			Mat Mu2(height, width, MAT_TYPE);
+			Mat Lambda1(height, width, MAT_TYPE_ID);
+			Mat Lambda2(height, width, MAT_TYPE_ID);
+			Mat Ix(height, width, MAT_TYPE_ID);
+			Mat Iy(height, width, MAT_TYPE_ID);
+			Mat Mu1(height, width, MAT_TYPE_ID);
+			Mat Mu2(height, width, MAT_TYPE_ID);
 
 			Eig2Image(Dxx, Dxy, Dyy, Lambda1, Lambda2, Ix, Iy, Mu1, Mu2);
-
-			//S* DEBUGGIN TEMPORARY
-
-
-
-			//S*
-
-			// filtered images corresponding to current sigma
-
 
 			const int rows = In.rows, cols = In.cols;
 			for (int i = 0; i < rows; i++)
@@ -194,7 +187,6 @@ namespace vf
 						pDir[j] = curDir;
 					}
 
-
 					//set hessianDeterminant to maximum value across all sigmas
 					e_t curDoH = curMu1 * curMu2;
 					if (k == 0) // hessianDeterminant from first sigma is default value
@@ -212,7 +204,7 @@ namespace vf
 
 
 	// Not too sure about this function. Will have to follow up.
-	void RidgenessDetection(Mat In, Mat &ridgeness)
+	void RidgenessDetection(Mat In, Mat &ridgeness, e_t const kSizeHessian)
 	{
 		int frangiScaleMin = 3, frangiScaleMax = 5, frangiScaleRatio = 1;
 		e_t frangiBetaOne = 0.5, frangiBetaTwo = 15;
@@ -229,10 +221,9 @@ namespace vf
 		{
 			Hessian2D(In, s, Ixx, Iyy, Ixy);
 			//correct for scale
-			Ixx = (ksizeHessian*ksizeHessian)*Ixx;
-			Ixy = (ksizeHessian*ksizeHessian)*Ixy;
-			Iyy = (ksizeHessian*ksizeHessian)*Iyy;
-
+			Ixx = (kSizeHessian * kSizeHessian) * Ixx;
+			Ixy = (kSizeHessian * kSizeHessian) * Ixy;
+			Iyy = (kSizeHessian * kSizeHessian) * Iyy;
 
 			// S: Reorder parameters later
 			Eig2Image(Ixx, Iyy, Ixy, Lambda1, Lambda2, mu1, mu2, Vx, Vy);
@@ -240,8 +231,6 @@ namespace vf
 		}
 
 	}
-
-
 
 	// Inputs: In, specularThreshold
 	// Outputs: ridgenessImage, hessianDeterminant, hessianAngle
@@ -252,26 +241,81 @@ namespace vf
 
 		// RemoveSpecular(In, specularThreshold); //S* Add later if necessary
 
-		Mat vesselEnhancedImage;
+		Mat vesselEnhancedImage = Mat1d(In.rows, In.cols);
 		FrangiFilter2D(In, vesselEnhancedImage, hessianAngle, hessianDeterminant);
 		int sigma = 255;
 		CalculateRidgeness(In, vesselEnhancedImage, hessianAngle, sigma, ridgenessImage);
 
 	}
 
-
-	void CalculateRidgeness(Mat& originalImage, Mat& vesselEnhancedImage, Mat& Direction, int sigma, Mat& ridgenessImage) // Review Paramters
+	// Calculate Ridgeness
+	// Inputs: In, enhancedIn
+	// Outputs: 
+	void CalculateRidgeness(Mat& originalImage, Mat& enhancedIn, Mat& Direction, int sigma, Mat& ridgenessImage) // Review Paramters
 	{
+		const int rows = originalImage.rows, cols = originalImage.cols;
+		
+		// Get hessianIx and hessianIy
+		Mat hessianIx = Mat1d(rows, cols);
+		Mat hessianIy = Mat1d(rows, cols);
+
+		for (int i = 0; i < rows; i++)
+		{
+			e_t * const pHessianIx= hessianIx.ptr<e_t>(i);
+			e_t * const pHessianIy = hessianIy.ptr<e_t>(i);
+			e_t * const pDirection = Direction.ptr<e_t>(i);
+			for (int j = 0; j < cols; j++)
+			{
+				e_t temp = pDirection[j] + (VESSEL_FEATURES_PI / 2);
+				pHessianIx[j] = cos(temp);
+				pHessianIy[j] = sin(temp);
+			}
+		}
+
+		// Apply guassian filter
+		const int kSize = 5;
+		cv::Mat gaussianKernel = cv::getGaussianKernel(kSize, sigma, CV_64F);
+		cv::mulTransposed(gaussianKernel, gaussianKernel, false);
+		Mat filteredImage = Mat1d(rows, cols);
+		// S* Note Below might be wrong, ImFilter implementation
+		// assumes matlab parameter 'conv' not 'replicate'
+		vf::Imfilter(originalImage, filteredImage, gaussianKernel);
+
+		// Get [Y, x]
+		const int kern_width = 6 * sigma + 1;
+		Mat Y = Mat(kern_width, kern_width, MAT_TYPE_ID);
+		for (int i = 0, val = -3 * sigma; i < kern_width; i++, val++)
+		{
+			e_t * const pY = Y.ptr<e_t>(i);
+			for (int j = 0; j < kern_width; j++)
+			{
+				pY[j] = static_cast<e_t>(val);
+			}
+		}
+		Mat X = Y.t();
+
+		// Get DGaussx and Dgaussy
+		Mat exp_term;
+		cv::exp(-(X.mul(X) + Y.mul(Y)) / (2 * sigma * sigma), exp_term);
+		Mat DGaussx = (1 / (2 * VESSEL_FEATURES_PI * pow(sigma, 2))) * ( (-X) / (sigma * sigma)).mul(exp_term);
+		Mat DGaussy = DGaussx.t();
+
+		// Get Dx and Dy by filtering
+		Mat Dx = Mat1d(rows, cols);
+		Mat Dy = Mat1d(rows, cols);
+		vf::Imfilter(filteredImage, Dx, DGaussx);
+		vf::Imfilter(filteredImage, Dy, DGaussy);
+
+		//
+		int margin = 3;
 
 	}
-
 
 	// Removes specular reflection from input image
 	void RemoveSpecular(Mat& In, int specularThreshold = 255)
 	{
 
 	}
-
 
 	// Demos the basic features provided
 	void Demo(const string& testImage)
@@ -320,5 +364,4 @@ namespace vf
 		Ptr<FilterEngine> fe = createLinearFilter(src.type(), ker.type(), ker, anchor, delta, BORDER_CONSTANT, BORDER_CONSTANT, Scalar(0));
 		fe->apply(src, dst);
 	}
-
 }
